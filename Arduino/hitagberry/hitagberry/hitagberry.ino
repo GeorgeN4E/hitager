@@ -14,20 +14,12 @@
 
 #include <Arduino.h>
 
-// Define pins
-#if defined(__AVR_ATmega328P__)
-const int CLKOUT = 3;
-#elif defined(__AVR_ATmega2560__)
-const int CLKOUT = 9;
-#else
-// For the Pico (or other boards), choose an appropriate pin for the clock output.
-const int CLKOUT = 3; // Adjust as needed.
-#endif
+const int CLKOUT = 10; // Adjust as needed.
 
-const int SCK_pin = 6;
-const int dout_pin = 7;
-const int din_pin = 2;   // Note: din_pin must support external interrupts!
-const int test_pin = 4;
+const int SCK_pin = 11;
+const int dout_pin = 12;
+const int din_pin = 13;   // Note: din_pin must support external interrupts!
+const int test_pin = 14;
 
 const char hitagerVersion[] = {"211"};  // Major Version, Minor Version, Fix
 
@@ -94,10 +86,10 @@ volatile unsigned long vvdiDelay = 6982;
 volatile unsigned long lastTime = 0;
 
 void setup() {
-  Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect if needed
-  }
+  // Serial.begin(115200);
+  // while (!Serial) {
+  //   ; // wait for serial port to connect if needed
+  // }
 
   AbicConf_Page0.SetPageCmd = 1;
   AbicConf_Page1.SetPageCmd = 1;
