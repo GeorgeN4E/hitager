@@ -21,7 +21,6 @@ namespace Hitager
         string _fileName;
         PortHandler portHandler = new PortHandler();
 
-
         public FormHexEditor()
         {
             InitializeComponent();
@@ -649,7 +648,10 @@ namespace Hitager
             portList.SelectedIndex = portList.Items.Count-1;
             hitag2.SetPortHandler(ref portHandler);
             hitag2.setHexbox(ref hexBox);
-            //portHandler.setPort(portList.SelectedItem.ToString());
+            
+            //make it to load without port (without having device in) and without errors
+            portHandler.setPort(portList.SelectedItem.ToString());
+            
             this.portHandler.debugUpdated += new System.EventHandler(this.debugUpdatedEventHandler);
             hitagAes.SetPortHandler(ref portHandler);
             hitagAes.setHexbox(ref hexBox);
