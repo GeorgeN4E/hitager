@@ -10,6 +10,8 @@ using System.Windows.Forms;
 using System.Threading;
 using System.IO;
 
+
+
 namespace Hitager
 {
     public partial class BMW_Remote : Form
@@ -359,5 +361,133 @@ namespace Hitager
             }
             
         }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Open a file dialog for the remote key EEPROM dump file
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.InitialDirectory = "c:\\";
+            openFileDialog.Filter = "Binary files (*.bin)|*.bin|All files (*.*)|*.*";
+            openFileDialog.Title = "Select Remote Key EEPROM Dump (4096 bytes)";
+
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            // Validate that the file is exactly 4096 bytes
+            //FileInfo fi = new FileInfo(openFileDialog.FileName);
+            //if (fi.Length != 4096)
+            //{
+            //    MessageBox.Show("The selected file must be exactly 4096 bytes.",
+            //                    "Invalid File Size",
+            //                    MessageBoxButtons.OK,
+            //                    MessageBoxIcon.Error);
+            //    return;
+            //}
+
+            // Read the entire EEPROM dump into a byte array
+            byte[] remoteEeprom = File.ReadAllBytes(openFileDialog.FileName);
+
+            // --- Extract the KeyID ---
+            // The ReadID() command uses "i05C0" so we assume the KeyID is stored
+            // at offset 0x05C0 (1472 in decimal) and occupies 4 bytes (8 hex characters)
+            int keyIDOffset = 0x05C0;  // 1472 decimal
+            if (remoteEeprom.Length < keyIDOffset + 4)
+            {
+                MessageBox.Show("EEPROM dump does not contain expected KeyID data.",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            byte[] keyIDBytes = new byte[4];
+            Array.Copy(remoteEeprom, keyIDOffset, keyIDBytes, 0, 4);
+            string keyID = BitConverter.ToString(keyIDBytes).Replace("-", "");
+
+            // Optionally display the extracted KeyID
+            MessageBox.Show("KeyID extracted: " + keyID, "KeyID", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // --- Extract the Remote Data Block ---
+            // In the original code the remote data block is read via readBlocks(15,15).
+            // Assuming each block is 32 bytes, block 15 starts at offset 15 * 32 = 480.
+            int blockOffset = 15 * 32;  // 480
+            int blockLength = 32;       // 32 bytes → 64 hex characters
+            if (remoteEeprom.Length < blockOffset + blockLength)
+            {
+                MessageBox.Show("EEPROM dump does not contain the expected remote data block.",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            byte[] blockData = new byte[blockLength];
+            Array.Copy(remoteEeprom, blockOffset, blockData, 0, blockLength);
+            string remoteDataBlock = BitConverter.ToString(blockData).Replace("-", "");
+
+            // --- Decode the Remote Data Block Based on KeyID ---
+            // The original code uses the 7th character of the KeyID to decide the layout:
+            //   If it equals "4": PCF7944 layout
+            //   If it equals "9": PCF7945/53 layout
+            if (remoteDataBlock.Length == 64 && keyID.Substring(6, 1).Equals("4", StringComparison.OrdinalIgnoreCase))
+            {
+                // PCF7944 Memory Layout:
+                // - RSK_HI: 4 hex characters from offset ((5*8)+4) i.e. characters 44–47
+                // - RSK_LO: 8 hex characters from offset (4*8) i.e. characters 32–39
+                // - RemoteID: 4 hex characters from offset (7*8) i.e. characters 56–59
+                // - Sync: depends on the first 8 hex characters; if they equal "FFFFFFFF" or "B1B1B1B1",
+                //         use the 8 hex characters starting at offset (6*8)=48, otherwise use the first 8.
+                string rsk_hi = remoteDataBlock.Substring((5 * 8) + 4, 4);
+                string rsk_lo = remoteDataBlock.Substring(4 * 8, 8);
+                string remoteID = remoteDataBlock.Substring((7 * 8), 4);
+                string first8 = remoteDataBlock.Substring(0, 8);
+                string sync;
+                if (first8.Equals("FFFFFFFF", StringComparison.OrdinalIgnoreCase) ||
+                    first8.Equals("B1B1B1B1", StringComparison.OrdinalIgnoreCase))
+                {
+                    sync = remoteDataBlock.Substring((6 * 8), 8);
+                }
+                else
+                {
+                    sync = first8;
+                }
+
+                // Display the extracted values
+                maskedTextBox_RSK_HI.Text = rsk_hi;
+                maskedTextBox_RSK_LO.Text = rsk_lo;
+                maskedTextBox_RemoteID.Text = remoteID;
+                maskedTextBox_Sync.Text = sync;
+            }
+            else if (remoteDataBlock.Length == 64 && keyID.Substring(6, 1).Equals("9", StringComparison.OrdinalIgnoreCase))
+            {
+                // PCF7945/53 Memory Layout:
+                // - RSK_HI: 4 hex characters from offset ((5*8)+4)
+                // - RSK_LO: 8 hex characters from offset (4*8)
+                // - RemoteID: 4 hex characters from offset (5*8)
+                // - Conf: 8 hex characters from offset (3*8)
+                // - Sync: 8 hex characters from the beginning (offset 0)
+                string rsk_hi = remoteDataBlock.Substring((5 * 8) + 4, 4);
+                string rsk_lo = remoteDataBlock.Substring(4 * 8, 8);
+                string remoteID = remoteDataBlock.Substring((5 * 8), 4);
+                string conf = remoteDataBlock.Substring((3 * 8), 8);
+                string sync = remoteDataBlock.Substring(0, 8);
+
+                // Display the extracted values
+                maskedTextBox_RSK_HI.Text = rsk_hi;
+                maskedTextBox_RSK_LO.Text = rsk_lo;
+                maskedTextBox_RemoteID.Text = remoteID;
+                maskedTextBox_Conf.Text = conf;
+                maskedTextBox_Sync.Text = sync;
+            }
+            else
+            {
+                // If the remote data block doesn't have the expected format,
+                // mark the fields as "ERROR" and notify the user.
+                maskedTextBox_RSK_HI.Text = "ERROR";
+                maskedTextBox_RSK_LO.Text = "ERROR";
+                maskedTextBox_RemoteID.Text = "ERROR";
+                maskedTextBox_Sync.Text = "ERROR";
+                if (maskedTextBox_Conf != null)
+                    maskedTextBox_Conf.Text = "ERROR";
+                MessageBox.Show("Remote data block is invalid or does not match expected layout.",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
+
     }
 }

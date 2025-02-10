@@ -649,7 +649,7 @@ namespace Hitager
             portList.SelectedIndex = portList.Items.Count-1;
             hitag2.SetPortHandler(ref portHandler);
             hitag2.setHexbox(ref hexBox);
-            portHandler.setPort(portList.SelectedItem.ToString());
+            //portHandler.setPort(portList.SelectedItem.ToString());
             this.portHandler.debugUpdated += new System.EventHandler(this.debugUpdatedEventHandler);
             hitagAes.SetPortHandler(ref portHandler);
             hitagAes.setHexbox(ref hexBox);

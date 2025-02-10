@@ -8,3 +8,13 @@ C:\Users\dell\Downloads\Be.HexEditor-1.6.0\sources\Be.Windows.Forms.HexBox\obj\D
 C:\Users\dell\Downloads\Be.HexEditor-1.6.0\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.csproj.CoreCompileInputs.cache
 C:\Users\dell\Downloads\Be.HexEditor-1.6.0\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.dll
 C:\Users\dell\Downloads\Be.HexEditor-1.6.0\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.pdb
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\bin\Debug\Be.Windows.Forms.HexBox.dll
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\bin\Debug\Be.Windows.Forms.HexBox.pdb
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\bin\Debug\Be.Windows.Forms.HexBox.xml
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.csproj.AssemblyReference.cache
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.resources
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.Properties.Resources.resources
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.csproj.GenerateResource.cache
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.csproj.CoreCompileInputs.cache
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.dll
+D:\Sublime Text\VisualStudio\hitager\sources\Be.Windows.Forms.HexBox\obj\Debug\Be.Windows.Forms.HexBox.pdb

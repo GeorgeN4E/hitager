@@ -339,5 +339,10 @@ namespace Hitager
             BMW_Vehicle_Data VehicleData = new BMW_Vehicle_Data(this);
             VehicleData.Show();
         }
+
+        private void BmwHt2_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

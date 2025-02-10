@@ -47,15 +47,17 @@ namespace Hitager
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(194, 25);
+            this.label2.Location = new System.Drawing.Point(291, 38);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(39, 13);
+            this.label2.Size = new System.Drawing.Size(56, 20);
             this.label2.TabIndex = 11;
             this.label2.Text = "Blocks";
             // 
             // blocksToHandle
             // 
-            this.blocksToHandle.Location = new System.Drawing.Point(197, 72);
+            this.blocksToHandle.Location = new System.Drawing.Point(296, 111);
+            this.blocksToHandle.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.blocksToHandle.Maximum = new decimal(new int[] {
             32,
             0,
@@ -67,7 +69,7 @@ namespace Hitager
             0,
             0});
             this.blocksToHandle.Name = "blocksToHandle";
-            this.blocksToHandle.Size = new System.Drawing.Size(91, 20);
+            this.blocksToHandle.Size = new System.Drawing.Size(136, 26);
             this.blocksToHandle.TabIndex = 10;
             this.blocksToHandle.Value = new decimal(new int[] {
             15,
@@ -78,9 +80,10 @@ namespace Hitager
             // write
             // 
             this.write.Enabled = false;
-            this.write.Location = new System.Drawing.Point(6, 59);
+            this.write.Location = new System.Drawing.Point(9, 91);
+            this.write.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.write.Name = "write";
-            this.write.Size = new System.Drawing.Size(109, 35);
+            this.write.Size = new System.Drawing.Size(164, 54);
             this.write.TabIndex = 7;
             this.write.Text = "Write";
             this.write.UseVisualStyleBackColor = true;
@@ -88,9 +91,10 @@ namespace Hitager
             // 
             // read
             // 
-            this.read.Location = new System.Drawing.Point(6, 19);
+            this.read.Location = new System.Drawing.Point(9, 29);
+            this.read.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.read.Name = "read";
-            this.read.Size = new System.Drawing.Size(109, 34);
+            this.read.Size = new System.Drawing.Size(164, 52);
             this.read.TabIndex = 6;
             this.read.Text = "Read";
             this.read.UseVisualStyleBackColor = true;
@@ -99,39 +103,43 @@ namespace Hitager
             // blocksStartNum
             // 
             this.blocksStartNum.Cursor = System.Windows.Forms.Cursors.Default;
-            this.blocksStartNum.Location = new System.Drawing.Point(197, 46);
+            this.blocksStartNum.Location = new System.Drawing.Point(296, 71);
+            this.blocksStartNum.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.blocksStartNum.Maximum = new decimal(new int[] {
             32,
             0,
             0,
             0});
             this.blocksStartNum.Name = "blocksStartNum";
-            this.blocksStartNum.Size = new System.Drawing.Size(91, 20);
+            this.blocksStartNum.Size = new System.Drawing.Size(136, 26);
             this.blocksStartNum.TabIndex = 12;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(158, 48);
+            this.label1.Location = new System.Drawing.Point(237, 74);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(33, 13);
+            this.label1.Size = new System.Drawing.Size(50, 20);
             this.label1.TabIndex = 14;
             this.label1.Text = "From:";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(168, 74);
+            this.label3.Location = new System.Drawing.Point(252, 114);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(23, 13);
+            this.label3.Size = new System.Drawing.Size(31, 20);
             this.label3.TabIndex = 15;
             this.label3.Text = "To:";
             // 
             // Button_Remote
             // 
-            this.Button_Remote.Location = new System.Drawing.Point(570, 8);
+            this.Button_Remote.Location = new System.Drawing.Point(709, 22);
+            this.Button_Remote.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Button_Remote.Name = "Button_Remote";
-            this.Button_Remote.Size = new System.Drawing.Size(109, 34);
+            this.Button_Remote.Size = new System.Drawing.Size(164, 52);
             this.Button_Remote.TabIndex = 16;
             this.Button_Remote.Text = "Remote";
             this.Button_Remote.UseVisualStyleBackColor = true;
@@ -139,9 +147,10 @@ namespace Hitager
             // 
             // Button_Vehicle_Data
             // 
-            this.Button_Vehicle_Data.Location = new System.Drawing.Point(570, 55);
+            this.Button_Vehicle_Data.Location = new System.Drawing.Point(709, 85);
+            this.Button_Vehicle_Data.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Button_Vehicle_Data.Name = "Button_Vehicle_Data";
-            this.Button_Vehicle_Data.Size = new System.Drawing.Size(109, 34);
+            this.Button_Vehicle_Data.Size = new System.Drawing.Size(164, 52);
             this.Button_Vehicle_Data.TabIndex = 17;
             this.Button_Vehicle_Data.Text = "Vehicle Data";
             this.Button_Vehicle_Data.UseVisualStyleBackColor = true;
@@ -156,22 +165,26 @@ namespace Hitager
             this.BmwKeyMemory_Groupbox.Controls.Add(this.blocksToHandle);
             this.BmwKeyMemory_Groupbox.Controls.Add(this.label1);
             this.BmwKeyMemory_Groupbox.Controls.Add(this.blocksStartNum);
-            this.BmwKeyMemory_Groupbox.Location = new System.Drawing.Point(3, 0);
+            this.BmwKeyMemory_Groupbox.Location = new System.Drawing.Point(4, 0);
+            this.BmwKeyMemory_Groupbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.BmwKeyMemory_Groupbox.Name = "BmwKeyMemory_Groupbox";
-            this.BmwKeyMemory_Groupbox.Size = new System.Drawing.Size(300, 101);
+            this.BmwKeyMemory_Groupbox.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.BmwKeyMemory_Groupbox.Size = new System.Drawing.Size(450, 155);
             this.BmwKeyMemory_Groupbox.TabIndex = 18;
             this.BmwKeyMemory_Groupbox.TabStop = false;
             this.BmwKeyMemory_Groupbox.Text = "Key Memory";
             // 
             // BmwHt2
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.BmwKeyMemory_Groupbox);
             this.Controls.Add(this.Button_Vehicle_Data);
             this.Controls.Add(this.Button_Remote);
+            this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.Name = "BmwHt2";
-            this.Size = new System.Drawing.Size(914, 150);
+            this.Size = new System.Drawing.Size(989, 231);
+            this.Load += new System.EventHandler(this.BmwHt2_Load);
             ((System.ComponentModel.ISupportInitialize)(this.blocksToHandle)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.blocksStartNum)).EndInit();
             this.BmwKeyMemory_Groupbox.ResumeLayout(false);
