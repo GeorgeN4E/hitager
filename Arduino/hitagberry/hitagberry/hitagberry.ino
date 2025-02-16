@@ -1,32 +1,36 @@
-/*
+/* 
  * (c) Janne Kivijakola
  * janne@kivijakola.fi
  *
- * Modified for the Raspberry Pi Pico (Arduino IDE) by [Your Name]
- *
- * NOTES:
- * - AVR-specific headers and registers have been removed.
- * - _delay_ms() and _delay_us() calls have been replaced by delay() and delayMicroseconds().
- * - The pulse–measurement code that originally used Timer1 now uses micros().
- * - The clock output configuration (originally using Timer2 registers) is commented and left
- *   as a placeholder. You will need to set up a 4MHz PWM (or similar) if required.
+ * Modified for Raspberry Pi Pico by ChatGPT
  */
 
 #include <Arduino.h>
 
-const int CLKOUT = 10; // Adjust as needed.
+// Replace AVR delay routines with Arduino ones
+#define _delay_ms(x)      delay(x)
+#define _delay_us(x)      delayMicroseconds(x)
 
-const int SCK_pin = 11;
-const int dout_pin = 12;
-const int din_pin = 13;   // Note: din_pin must support external interrupts!
-const int test_pin = 14;
+// Instead of AVR Timer registers we use micros() for timing.
+// We define START_TIMER and STOP_TIMER as follows:
+volatile unsigned long last_time = 0;
+#define START_TIMER   (last_time = micros())
+#define STOP_TIMER    // (nothing needed)
+
+//#define F_CPU 16000000UL
+
+
+const int CLKOUT = ;
+
+
+const int SCK_pin   = 11;
+const int dout_pin  = 12;
+const int din_pin   = 13;   // Note: din_pin must have external interrupt capability!
+const int test_pin  = 14;
 
 const char hitagerVersion[] = {"211"};  // Major Version, Minor Version, Fix
 
-// Since we no longer use AVR timers, define dummy macros:
-#define START_TIMER  lastTime = micros();
-#define STOP_TIMER   // no operation
-
+// Global variables
 byte sampcont = 0x17;
 
 unsigned int isrtimes[400];
@@ -45,7 +49,7 @@ int delay_p = 5;
 int hysteresis = 1;
 
 /* ABIC Settings */
-static union{
+static union {
   struct {
     unsigned char filter_l:1;
     unsigned char filter_h:1;
@@ -56,7 +60,7 @@ static union{
   unsigned char byteval;
 } AbicConf_Page0;
 
-static union{
+static union {
   struct {
     unsigned char txdis:1;
     unsigned char hysteresis:1;
@@ -68,7 +72,7 @@ static union{
   unsigned char byteval;
 } AbicConf_Page1;
 
-static union{
+static union {
   struct {
     unsigned char freeze:2;
     unsigned char acqamp:1;
@@ -82,15 +86,11 @@ static union{
 //volatile unsigned long vvdiDelay = 7768;
 volatile unsigned long vvdiDelay = 6982;
 
-// Global variable for timing (replacing the AVR Timer1 counter)
-volatile unsigned long lastTime = 0;
-
-void setup() {
-  // Serial.begin(115200);
-  // while (!Serial) {
-  //   ; // wait for serial port to connect if needed
-  // }
-
+void setup()
+{
+  Serial.begin(115200);
+  while(!Serial);  // Wait for serial port to connect, if needed
+  
   AbicConf_Page0.SetPageCmd = 1;
   AbicConf_Page1.SetPageCmd = 1;
   AbicConf_Page2.SetPageCmd = 1;
@@ -102,16 +102,16 @@ void setup() {
   AbicConf_Page1.page_nr = 1;
   AbicConf_Page2.page_nr = 2;
   
-  // Configure the clock output pin.
+  // AVR-specific timer config removed:
+  // TIMSK0=0;
+  
+  /* Configure external clock output for PCF7991 ABIC */
   pinMode(CLKOUT, OUTPUT);
-  pinMode(test_pin, OUTPUT);
-  // ***** IMPORTANT *****
-  // The AVR code configures Timer2 to output a 4MHz clock.
-  // On the Pico you must configure PWM (or similar) to get this frequency.
-  // For now, we simply set the CLKOUT pin LOW as a placeholder.
-  digitalWrite(CLKOUT, LOW);
-
-  // Configure I/O pins.
+  pinMode(test_pin, OUTPUT); 
+  // AVR registers for Timer2 & Timer1 removed:
+  // TCCR2A = 0x23; TCCR2B = 0x09; OCR2A = 3; OCR2B = 1; TCCR1A = 0;
+  
+  /* Pin configuration */
   pinMode(SCK_pin, OUTPUT);
   pinMode(dout_pin, OUTPUT);
   pinMode(din_pin, INPUT);
@@ -124,7 +124,7 @@ void setup() {
 
   writePCF7991Reg(0x40, 8); // wake up
   AbicConf_Page1.txdis = 0;
-  writePCF7991Reg(AbicConf_Page1.byteval, 8); // RF on
+  writePCF7991Reg(AbicConf_Page1.byteval, 8); // rf on
   byte readval = 0;
   for (int i = 2; i < 9; i++) {
     readval = readPCF7991Reg(i);
@@ -132,143 +132,170 @@ void setup() {
   }
 
   Serial.println("set sampling time");
-  int samplingT = (1 << 7) | (0x3f & sampcont);
+  int samplingT = (1 << 7) | (0x3F & sampcont);
   readval = readPCF7991Reg(samplingT);
   printRegister(samplingT, readval);
 
   Serial.println("done registers");
 }
 
-void loop() {
+void loop()
+{
   while (Serial.available() < 1) {
     delay(1);
   }
   byte command = Serial.read();
-  switch (command) {
-    case 'a': {
-      Serial.println("adapt offset");
+  switch (command)
+  {
+    case 'a':
+    {
+      Serial.print("adapt offset\n");
+      
       rfoffset = serialToByte();
       Serial.print("RESP:\n");
       Serial.print(rfoffset, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
     
-    case 'b': {
-      Serial.println("decoding mode");
+    case 'b':
+    {
+      Serial.print("decoding mode\n");
+      
       decodemode = serialToByte();
       Serial.print("RESP:\n");
       Serial.print(decodemode, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
 
-    case 'c': {
-      Serial.println("Pulse width delay adjust");
-      delay_p = serialToByte() & 0xff;
+    case 'c':
+    {
+      Serial.print("Pulse width delay adjust\n");
+      
+      delay_p = serialToByte() & 0xFF;
       Serial.print("RESP:\n");
       Serial.print(delay_p, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
     
-    case 'd': {
-      Serial.println("debug mode");
+    case 'd':
+    {
+      Serial.print("debug mode\n");
+      
       debug = serialToByte();
       Serial.print("RESP:\n");
       Serial.print(debug, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
 
-    case 'f': {
+    case 'f':
+    {
       AbicConf_Page1.txdis = 1;
-      writePCF7991Reg(AbicConf_Page1.byteval, 8); // RF off
-      Serial.println("RFOFF");
+      writePCF7991Reg(AbicConf_Page1.byteval, 8); // rf off
+      Serial.print("RFOFF\n");
       break;
     }
     
-    case 'g': {
-      Serial.println("Gain adjust");
+    case 'g':
+    {
+      Serial.print("Gain adjust\n");
+      
       AbicConf_Page0.gain = serialToByte() & 0x3;
       writePCF7991Reg(AbicConf_Page0.byteval, 8);
       Serial.print("RESP:\n");
       Serial.print(AbicConf_Page0.gain, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
-    
-    case 'h': {
-      Serial.println("Hysteresis");
+    case 'h':
+    {
+      Serial.print("Hysteresis\n");
+      
       AbicConf_Page1.hysteresis = serialToByte() & 0x1;
       Serial.print("RESP:\n");
       Serial.print(AbicConf_Page1.hysteresis, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
     
-    case 'i': {
-      Serial.println("transfer");
+    case 'i':
+    {
+      Serial.print("transfer\n");
+      
       byte cmdlength = serialToByte();
       byte authcmd[300] = {0};
-      if (cmdlength > 1 && cmdlength < 200) {
+      if (cmdlength > 1 && cmdlength < 200)
         for (int i = 0; i < (cmdlength + 7) / 8; i++) {
           authcmd[i] = serialToByte();
         }
-      }
+
       communicateTag(authcmd, cmdlength);
-      Serial.println("EOF");
+      Serial.print("EOF\n");
       break;
     }
     
-    case 'o': {
+    case 'o':
+    {
       AbicConf_Page1.txdis = 0;
       writePCF7991Reg(AbicConf_Page0.byteval, 8);
       writePCF7991Reg(AbicConf_Page2.byteval, 8);
-      writePCF7991Reg(AbicConf_Page1.byteval, 8); // RF on
+      writePCF7991Reg(AbicConf_Page1.byteval, 8); // rf on
+      
       adapt(rfoffset);
-      Serial.println("RFON");
+      Serial.print("RFON\n");
       break;
     }
 
-    case 'p': {
+    case 'p':
+    {
       unsigned char PageNr = Serial.read();
       if (PageNr > '3' || PageNr < '0') {
-        Serial.println("Page Nr. not within permitted range\nERROR");
+        Serial.print("Page Nr. not within permitted range\n");
+        Serial.print("ERROR\n");
       } else {
         Serial.print("Read ABIC config Page");
         Serial.write(PageNr);
-        Serial.println(":");
-        PageNr -= '0'; // Convert character to number
-        byte PageData = readPCF7991Reg(0b00000100 | PageNr);
+        Serial.print(":\n");
+        PageNr -= '0'; // Convert char to number
+        byte PageData = readPCF7991Reg(0b00000100 | PageNr);  // "Read Page cmd + 2 bit Page Nr."
         Serial.print("RESP:");
         Serial.print(PageData, HEX);
-        Serial.println("\nEOF");
-      }      
+        Serial.print("\nEOF\n");
+      }
       break;
     }
     
-    case 'q': {
-      Serial.println("Super chip init");
-      writePCF7991Reg(0x50 | ((hysteresis & 0x1) << 1), 8); // RF on
-      delayMicroseconds(350);
-      delayMicroseconds(2500);
+    case 'q':
+    {
+      Serial.print("Super chip init\n");
+      writePCF7991Reg(0x50 | ((hysteresis & 0x1) << 1), 8); // rf on
+      _delay_us(350);
+      _delay_us(2500);
       superInit();
       break;
     }
 
-    case 'r': {
+    case 'r':
+    {
       byte cmdlength = serialToByte();
       byte cmd[300] = {0};
-      if (cmdlength > 1 && cmdlength < 200) {
+      if (cmdlength > 1 && cmdlength < 200)
         for (int i = 0; i < (cmdlength * 2 + 3); i++) {
           cmd[i] = serialToByte();
         }
-      }
-      writePCF7991Reg(0x51, 8); // RF off
-      delayMicroseconds(1000);
-      writePCF7991Reg(0x50 | ((hysteresis & 0x1) << 1), 8); // RF on
-      delayMicroseconds(350);
+      writePCF7991Reg(0x51, 8); // rf off
+      _delay_us(1000);
+      writePCF7991Reg(0x50 | ((hysteresis & 0x1) << 1), 8); // rf on
+      _delay_us(350);
         
       digitalWrite(SCK_pin, LOW);
       writePCF7991Reg(0xe0, 3);
@@ -278,107 +305,115 @@ void loop() {
       startDelay |= cmd[1];
       
       for (unsigned int d = 0; d < startDelay; d++) {
-          delayMicroseconds(100);
+          _delay_us(100);
       }
       digitalWrite(SCK_pin, HIGH);
-      delayMicroseconds(70);
+      _delay_us(70);
       digitalWrite(SCK_pin, LOW);
       writePCF7991Reg(0x10, 8);
 
       for (int i = 0; i < cmdlength; i++) {
           digitalWrite(dout_pin, HIGH);
           for (int d = 0; d < cmd[i * 2 + 2]; d++) {
-              delayMicroseconds(9);
+              _delay_us(9);
           }
           digitalWrite(dout_pin, LOW);
           for (int d = 0; d < cmd[i * 2 + 3]; d++) {
-              delayMicroseconds(9);
+              _delay_us(9);
           }
       }
       
       digitalWrite(dout_pin, HIGH);
       for (int d = 0; d < cmd[cmdlength * 2 + 2]; d++) {
-          delayMicroseconds(9);
+          _delay_us(9);
       }
       digitalWrite(dout_pin, LOW);
-      delayMicroseconds(3000);
+      _delay_us(3000);
       
       readTagResp();
       processManchester();
       
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
       break;
     }
 
-    case 's': {
-      while (!Serial.available()) { }
+    case 's':
+    {
+      while (!Serial.available()) {} // Wait until byte available
       unsigned char PageData = (Serial.read() & 0b00111111);
+      
       Serial.print("Write ABIC Page");
       Serial.write('0' + ((PageData >> 4) & 0b00000011));
       Serial.print(" 0x");
       Serial.print((PageData & 0b00001111), HEX);
-      Serial.println();
+      Serial.print("\n");
 
-      // Copy the received target config to the local config.
+      /* Copy received target config to local config */
       switch (PageData & 0b00110000) {
-        case 0:
-          AbicConf_Page0.byteval = ((PageData & 0b00111111) | 0b01000000);
-          break;
-        case 0b00010000:
-          AbicConf_Page1.byteval = ((PageData & 0b00111111) | 0b01000000);
-          break;
-        case 0b00100000:
-          AbicConf_Page2.byteval = ((PageData & 0b00111111) | 0b01000000);
-          break;
+        case 0:          AbicConf_Page0.byteval = ((PageData & 0b00111111) | 0b01000000); break;
+        case 0b00010000: AbicConf_Page1.byteval = ((PageData & 0b00111111) | 0b01000000); break;
+        case 0b00100000: AbicConf_Page2.byteval = ((PageData & 0b00111111) | 0b01000000); break;
       }
       
       writePCF7991Reg(PageData | 0b01000000, 8);
-      Serial.println("EOF");
+      Serial.print("EOF\n");
       break;
     }
     
-    case 't': {
+    case 't':
+    {
       tester();
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
       break;
     }
     
-    case 'v': {
+    case 'v':
+    {
       Serial.print("Hitager version:");
       Serial.print(hitagerVersion);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
       break;
     }
 
-    case 'w': {
-      Serial.println("Set VVDI delay");
+    case 'w':
+    {
+      Serial.print("Set VVDI delay");
       byte delays[3] = {0};
+      
       for (int i = 1; i >= 0; i--) {
         delays[i] = serialToByte();
       }
-      int mydelay = *((int *)delays);
-      Serial.println(mydelay);
+      int mydelay = ((int *)delays)[0];
+      Serial.print(mydelay);
+      Serial.print("\n");
+
       vvdiDelay += mydelay;
-      Serial.println(vvdiDelay);
-      Serial.println("EOF");
+      Serial.print(vvdiDelay);
+      Serial.print("\nEOF\n");
       break;
     }
 
-    case 'x': {
-      Serial.println("Pulse 1 delay adjust");
-      delay_1 = serialToByte() & 0xff;
+    case 'x':
+    {
+      Serial.print("Pulse 1 delay adjust\n");
+      
+      delay_1 = serialToByte() & 0xFF;
       Serial.print("RESP:\n");
       Serial.print(delay_1, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
     
-    case 'z': {
-      Serial.println("Pulse 0 delay adjust");
-      delay_0 = serialToByte() & 0xff;
+    case 'z':
+    {
+      Serial.print("Pulse 0 delay adjust\n");
+      
+      delay_0 = serialToByte() & 0xFF;
       Serial.print("RESP:\n");
       Serial.print(delay_0, HEX);
-      Serial.println("\nEOF");
+      Serial.print("\nEOF\n");
+      
       break;
     }
   }
@@ -387,29 +422,36 @@ void loop() {
   }
 }
 
-void superInit() {
-  byte authcmd[] = {0x58, 0x48, 0x4F, 0x52, 0x53, 0x45};
+void superInit()
+{
+  byte authcmd[]  = {0x58, 0x48, 0x4F, 0x52, 0x53, 0x45};
   byte authcmd2[] = {0x07, 0x2F};
   byte authcmd3[] = {0x73, 0x72};
+  unsigned long adjust = 0;
   
   writeToTag(authcmd, 0x30);
   writePCF7991Reg(0xe0, 3);
-  delayMicroseconds(20000);
+  _delay_us(20000);
   digitalWrite(SCK_pin, HIGH);
   writeToTag(authcmd2, 0x10);
   writePCF7991Reg(0xe0, 3);
   
   for (unsigned long d = 0; d < vvdiDelay; d++)
-    delayMicroseconds(2);
+    _delay_us(2);
   
   digitalWrite(SCK_pin, HIGH);
   communicateTag(authcmd3, 0x10);
-  Serial.println("\nEOF");
+  Serial.print("\nEOF\n");    
 }
 
-byte serialToByte() {
+byte serialToByte()
+{
   byte retval = 0;
-  while (Serial.available() < 2) { }
+
+  while (Serial.available() < 2) {
+    // Wait for two characters
+  }
+
   for (int i = 0; i < 2; i++) {
     retval <<= 4;
     byte raw = Serial.read();
@@ -423,7 +465,8 @@ byte serialToByte() {
   return retval;
 }
 
-void printRegister(byte addr, byte val) {
+void printRegister(byte addr, byte val)
+{
   Serial.print("Read addr 0x");
   Serial.print(addr, HEX);
   Serial.print(" value 0x");
@@ -431,64 +474,74 @@ void printRegister(byte addr, byte val) {
   Serial.println("");
 }
 
-void tester() {
+void tester()
+{
   isrCnt = 0;
-  START_TIMER;
+  last_time = micros();
   attachInterrupt(digitalPinToInterrupt(din_pin), pin_ISR, CHANGE);
+
   byte phase = readPCF7991Reg(0x08);
-  STOP_TIMER;
+  
+  detachInterrupt(digitalPinToInterrupt(din_pin));
   Serial.print("Measured phase:");
   Serial.println(phase, HEX);
   Serial.print("ISRcnt:");
   Serial.println(isrCnt, HEX);
-  detachInterrupt(digitalPinToInterrupt(din_pin));
 }
 
-byte readPCF7991Reg(byte addr) {
+byte readPCF7991Reg(byte addr)
+{
   byte readval = 0;
   writePCF7991Reg(addr, 8);
-  delayMicroseconds(500);
+  _delay_us(500);
   readval = readPCF991Response();
   return readval;
 }
 
-void adapt(int offset) {
-  byte phase = readPCF7991Reg(0x08);  // Read phase
+void adapt(int offset)
+{
+  byte phase = readPCF7991Reg(0x08);  // Read Phase
   Serial.print("Measured phase:");
   Serial.println(phase, HEX);
-  byte samplingT = (0x3f & (2 * phase + offset));
+  byte samplingT = (0x3F & (2 * phase + offset));
   Serial.print("adapt samplingT:");
   Serial.println(samplingT, HEX);
-  byte readval = readPCF7991Reg((1 << 7) | samplingT); // Set Sampling Time + cmd
+  byte readval = readPCF7991Reg((1 << 7) | samplingT); // Set Sampling Time + Cmd
   Serial.print("adapt readval:");
   Serial.println(readval, HEX);
 }
 
-byte readPCF991Response() {
+byte readPCF991Response()  
+{
   byte _receive = 0;
+  
   for (int i = 0; i < 8; i++) {
     digitalWrite(SCK_pin, HIGH);
-    delayMicroseconds(50);
+    _delay_us(50);
     bitWrite(_receive, 7 - i, digitalRead(din_pin));
     digitalWrite(SCK_pin, LOW);
-    delayMicroseconds(50);
+    _delay_us(50);
   }
+  
   return _receive;
 }
 
-void writeToTag(byte *data, int bits) {
+void writeToTag(byte *data, int bits)
+{
   int bytes = bits / 8;
   int rembits = bits % 8;
   int bytBits = 8;
   
   digitalWrite(SCK_pin, LOW);
+  
   writePCF7991Reg(0x19, 8);
   digitalWrite(dout_pin, LOW);
-  delayMicroseconds(20);
+
+  _delay_us(20);
   digitalWrite(dout_pin, HIGH);
-  delayMicroseconds(20);
+  _delay_us(20);
   digitalWrite(dout_pin, LOW);
-  
+
   for (int by = 0; by <= bytes; by++) {
     if (by == bytes)
       bytBits = rembits;
@@ -498,43 +551,43 @@ void writeToTag(byte *data, int bits) {
     for (int i = 0; i < bytBits; i++) {
       if (bitRead(data[by], 7 - i)) {
         for (int j = 0; j < delay_1; j++)
-          delayMicroseconds(10);
+          _delay_us(10);
         digitalWrite(dout_pin, HIGH);
-        delayMicroseconds(10);
+        _delay_us(10);
         digitalWrite(dout_pin, LOW);
       } else {
         for (int j = 0; j < delay_0; j++)
-          delayMicroseconds(10);
+          _delay_us(10);
         digitalWrite(dout_pin, HIGH);
-        delayMicroseconds(10);
+        _delay_us(10);
         digitalWrite(dout_pin, LOW);
       }
     }
   }
   
-  // End of transmission
   if (decodemode == 0)
-    delayMicroseconds(1200);
+    _delay_us(1200);
   else
-    delayMicroseconds(400); // For biphase decode, a shorter delay is used.
+    _delay_us(400);  // For biphase decoding, a shorter delay is used.
 }
 
-void readTagResp() {
+void readTagResp()
+{
   writePCF7991Reg(0xe0, 3);
   START_TIMER;
-  // Reset pulse counters and timing variables
   isrCnt = 0;
   capturedone = 0;
   bitsCnt = 0;
-  
-  // Set the starting time for pulse measurement
-  lastTime = micros();
+  digitalWrite(test_pin, !digitalRead(4));
+  last_time = micros();
   attachInterrupt(digitalPinToInterrupt(din_pin), pin_ISR, CHANGE);
-  
-  // Instead of using a hardware timer overflow, wait a fixed period.
-  delay(10); // Adjust this delay as necessary to capture all pulses
-  
-  // Mimic the original “last pulse” adjustment.
+
+  // Removed timer-overflow interrupt code (AVR-specific)
+
+  for (volatile int i = 0; i < 100; i++)
+    for (volatile int k = 0; k < 200; k++);
+
+  // Last pulse adjustment
   if (isrCnt < 400 && isrCnt > 3) {
     isrtimes_ptr[isrCnt - 1] = isrtimes_ptr[isrCnt - 2] + 201;
     isrCnt++;
@@ -544,56 +597,62 @@ void readTagResp() {
   detachInterrupt(digitalPinToInterrupt(din_pin));
 }
 
-void communicateTag(byte *tagcmd, unsigned int cmdLengt) {
+void communicateTag(byte *tagcmd, unsigned int cmdLengt)
+{
   isrtimes_ptr = isrtimes;
+  _delay_ms(10);
   writeToTag(tagcmd, cmdLengt);
   readTagResp();
+
   Serial.print("ISRcnt:");
   Serial.println(isrCnt, HEX);
+
   if (debug) {
     for (int s = 0; s < isrCnt; s++) {
       Serial.print(isrtimes[s]);
       Serial.print(", ");
     }
-    Serial.println();
+    Serial.print("\n");
   }
+
   if (decodemode == 0)
     processManchester();
   else
     processcdp();
 }
 
-void writePCF7991Reg(byte _send, uint8_t bits) {
+void writePCF7991Reg(byte _send, uint8_t bits)
+{
   pinMode(dout_pin, OUTPUT);
   digitalWrite(dout_pin, LOW);
-  delayMicroseconds(50);
+  _delay_us(50);
   digitalWrite(SCK_pin, HIGH);
-  delayMicroseconds(50);
+  _delay_us(50);
   digitalWrite(dout_pin, HIGH);
-  delayMicroseconds(50);
+  _delay_us(50);
   digitalWrite(SCK_pin, LOW);
   
   for (uint8_t i = 0; i < bits; i++) {
-    delayMicroseconds(50);
+    _delay_us(50);
     digitalWrite(dout_pin, bitRead(_send, 7 - i));
-    delayMicroseconds(50);
+    _delay_us(50);
     digitalWrite(SCK_pin, HIGH);
-    delayMicroseconds(50);
+    _delay_us(50);
     digitalWrite(SCK_pin, LOW);
   }
 }
 
-void pin_ISR() {
-  // Use micros() to compute the elapsed time since the last interrupt.
-  unsigned long currentTime = micros();
-  unsigned int travelTime = (unsigned int)(currentTime - lastTime);
-  lastTime = currentTime;
+void pin_ISR()
+{
+  unsigned long now = micros();
+  unsigned int travelTime = now - last_time;
+  last_time = now;
   
-  // Mark the edge type: for a rising edge, clear the LSB; for falling, set it.
+  // Use the LSB to indicate edge type (as in the original code)
   if (digitalRead(din_pin)) {
-    travelTime &= ~1;  // Rising edge: ensure even value.
+    travelTime &= ~1; // Clear LSB for rising edge
   } else {
-    travelTime |= 1;   // Falling edge: mark with odd value.
+    travelTime |= 1;  // Set LSB for falling edge
   }
   
   isrtimes_ptr[isrCnt] = travelTime;
@@ -601,7 +660,8 @@ void pin_ISR() {
     isrCnt++;
 }
 
-void processManchester() {
+void processManchester() 
+{
   int bitcount = 0;
   int bytecount = 0;
   int mybytes[10] = {0};
@@ -617,10 +677,9 @@ void processManchester() {
   }
   start += 3;
   
-  // Adapt the filtered pulse time using the first few pulses.
   int pulsetime_accum = 0;
   for (uint8_t i = start + 1; i < start + 4; i++) {
-      pulsetime_accum += isrtimes_ptr[i];
+    pulsetime_accum += isrtimes_ptr[i];
   }
   pulsetime_fil = pulsetime_accum / 4;
   
@@ -628,22 +687,21 @@ void processManchester() {
     start--;
     pulsetime_fil = fir_filter(pulsetime_fil, isrtimes_ptr[start]);
   }
-  
+
   for (int i = start; i < isrCnt; i++) {
     int pulsetime_thresh = 55;
     int travelTime = isrtimes_ptr[i];
-    
-    if (travelTime & 1) {  // high pulse
+        
+    if ((travelTime & 1) == 1) { // high
       if (travelTime > pulsetime_thresh) {
         if (state) {
           state = 1;
-          if (lead < 4) {
+          if (lead < 4)
             lead++;
-          } else {
+          else {
             mybytes[bytecount] |= (1 << (7 - bitcount++));
           }
         } else {
-          Serial.print("X");
           if (bytecount < 1)
             errorCnt++;
         }
@@ -666,7 +724,6 @@ void processManchester() {
           state = 1;
           bitcount++;
         } else {
-          Serial.print("X");
           if (bytecount < 1)
             errorCnt++;
         }
@@ -680,7 +737,7 @@ void processManchester() {
         }
       }
     }
-    
+     
     if (bitcount > 7) {
       bitcount = 0;
       bytecount++;
@@ -695,17 +752,17 @@ void processManchester() {
   char hash[20];
   Serial.print("\nRESP:");
   if (errorCnt || bytecount == 0)
-    Serial.println("NORESP");
-  else {
-    for (int s = 0; s < bytecount && s < 10; s++) {
+    Serial.print("NORESP\n");
+  else
+    for (int s = 0; s < bytecount && s < 20; s++) {
       sprintf(hash, "%02X", mybytes[s]);
       Serial.print(hash);
     }
-  }
-  Serial.println();
+  Serial.print("\n");
 }
 
-void processcdp() {
+void processcdp() 
+{
   int bitcount = 0;
   int bytecount = 0;
   int mybytes[10] = {0};
@@ -717,7 +774,7 @@ void processcdp() {
   start += 6;
   if ((isrtimes_ptr[start] & 1) == 0)
     start++;
-  
+
   for (int i = start; i < isrCnt; i++) {
     int travelTime = isrtimes_ptr[i];
     if (travelTime > 45) {
@@ -725,8 +782,8 @@ void processcdp() {
     } else {
       bitcount++;
       i++;
-    }
-    if (bitcount > 7) {
+    }      
+    if (bitcount > 7) {   
       bitcount = 0;
       bytecount++;
     }
@@ -740,23 +797,24 @@ void processcdp() {
   char hash[20];
   Serial.print("\nRESP:");
   if (errorCnt || bytecount == 0)
-    Serial.println("NORESP");
-  else {
-    for (int s = 0; s < bytecount && s < 10; s++) {
+    Serial.print("NORESP\n");
+  else
+    for (int s = 0; s < bytecount && s < 20; s++) {
       sprintf(hash, "%02X", mybytes[s]);
       Serial.print(hash);
     }
-  }
-  Serial.println();
+  Serial.print("\n");
 }
 
-unsigned int fir_filter(unsigned int pulse_fil_in, unsigned int current_pulse) {
+unsigned int fir_filter(unsigned int pulse_fil_in, unsigned int current_pulse)
+{
   unsigned int pulse_fil_out;
-  if (((int)pulse_fil_in - (int)current_pulse) > 3)
+  if (((int)pulse_fil_in - (int)current_pulse) > 3) {
     pulse_fil_out = pulse_fil_in - 1;
-  else if (((int)current_pulse - (int)pulse_fil_in) > 3)
+  } else if (((int)current_pulse - (int)pulse_fil_in) > 3) {
     pulse_fil_out = pulse_fil_in + 1;
-  else
+  } else {
     pulse_fil_out = pulse_fil_in;
+  }
   return pulse_fil_out;
 }
