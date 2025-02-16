@@ -17,9 +17,9 @@ const int CLKOUT = 9;
 #endif
 
 const int SCK_pin = 6;
-const int dout_pin = 7;
-const int din_pin = 2;   //Note: din_pin must have external interrupt feature!
-const int test_pin = 4;
+const int dout_pin = 7;	//Mine D7 NEGRU
+const int din_pin = 2;   //Mine D2 ALB    Note: din_pin must have external interrupt feature!
+const int test_pin = 4;  //Mien D4 VERDE XTAL1
 
 const char hitagerVersion[] = {"211"};  // Major Version, Minor Version, Fix
 
